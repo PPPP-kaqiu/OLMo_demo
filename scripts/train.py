@@ -97,7 +97,8 @@ def main(cfg: TrainConfig) -> None:
                 save_path.parent.mkdir(exist_ok=True, parents=True)
                 cfg.save(save_path)
             del save_path
-
+    import ipdb;ipdb.set_trace()
+    exit()
     barrier()
 
     # Maybe start W&B run.
