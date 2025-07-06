@@ -43,6 +43,16 @@ model:
   init_std: 0.02
   init_cutoff_factor: 3.0
   precision: amp_bf16
+  moe_num_experts: 8
+  moe_top_k: 2
+  moe_mlp_impl: sparse
+  moe_log_expert_assignment: true
+  moe_shared_expert: false
+  moe_lbl_in_fp32: false
+  moe_loss_weight: 0.1
+  moe_zloss_weight: null
+  moe_dropless: true
+  moe_capacity_factor: 1.25
   scale_emb_init: false
   emb_init_std: null
   norm_after: false
@@ -1115,7 +1125,6 @@ data:
     repetition_max_period: 13
     repetition_min_period: 1
     repetition_max_count: 32
-  custom_dataset: null
 restore_dataloader: true
 fast_forward_batches: null
 evaluators:
@@ -1159,7 +1168,6 @@ evaluators:
     timeout: 0
     seed: null
     instance_filter: null
-    custom_dataset: null
   device_eval_batch_size: null
   subset_num_batches: null
 - label: piqa
@@ -1180,7 +1188,6 @@ evaluators:
     timeout: 0
     seed: null
     instance_filter: null
-    custom_dataset: null
   device_eval_batch_size: null
   subset_num_batches: null
 - label: hellaswag
@@ -1201,7 +1208,6 @@ evaluators:
     timeout: 0
     seed: null
     instance_filter: null
-    custom_dataset: null
   device_eval_batch_size: null
   subset_num_batches: null
 - label: winogrande
@@ -1222,7 +1228,6 @@ evaluators:
     timeout: 0
     seed: null
     instance_filter: null
-    custom_dataset: null
   device_eval_batch_size: null
   subset_num_batches: null
 - label: openbook_qa
@@ -1243,7 +1248,6 @@ evaluators:
     timeout: 0
     seed: null
     instance_filter: null
-    custom_dataset: null
   device_eval_batch_size: null
   subset_num_batches: null
 - label: sciq
@@ -1264,7 +1268,6 @@ evaluators:
     timeout: 0
     seed: null
     instance_filter: null
-    custom_dataset: null
   device_eval_batch_size: null
   subset_num_batches: null
 - label: arc_easy
@@ -1285,7 +1288,6 @@ evaluators:
     timeout: 0
     seed: null
     instance_filter: null
-    custom_dataset: null
   device_eval_batch_size: null
   subset_num_batches: null
 - label: commonsense_qa
@@ -1306,7 +1308,6 @@ evaluators:
     timeout: 0
     seed: null
     instance_filter: null
-    custom_dataset: null
   device_eval_batch_size: null
   subset_num_batches: null
 - label: social_iqa
@@ -1327,7 +1328,6 @@ evaluators:
     timeout: 0
     seed: null
     instance_filter: null
-    custom_dataset: null
   device_eval_batch_size: null
   subset_num_batches: null
 - label: mmlu_stem_var
@@ -1348,7 +1348,6 @@ evaluators:
     timeout: 0
     seed: null
     instance_filter: null
-    custom_dataset: null
   device_eval_batch_size: null
   subset_num_batches: null
 - label: mmlu_humanities_var
@@ -1369,7 +1368,6 @@ evaluators:
     timeout: 0
     seed: null
     instance_filter: null
-    custom_dataset: null
   device_eval_batch_size: null
   subset_num_batches: null
 - label: mmlu_social_sciences_var
@@ -1390,7 +1388,6 @@ evaluators:
     timeout: 0
     seed: null
     instance_filter: null
-    custom_dataset: null
   device_eval_batch_size: null
   subset_num_batches: null
 - label: mmlu_other_var
@@ -1411,7 +1408,6 @@ evaluators:
     timeout: 0
     seed: null
     instance_filter: null
-    custom_dataset: null
   device_eval_batch_size: null
   subset_num_batches: null
 - label: mmlu_stem_mc_5shot
@@ -1432,7 +1428,6 @@ evaluators:
     timeout: 0
     seed: null
     instance_filter: null
-    custom_dataset: null
   device_eval_batch_size: null
   subset_num_batches: null
 - label: mmlu_humanities_mc_5shot
@@ -1453,7 +1448,6 @@ evaluators:
     timeout: 0
     seed: null
     instance_filter: null
-    custom_dataset: null
   device_eval_batch_size: null
   subset_num_batches: null
 - label: mmlu_social_sciences_mc_5shot
@@ -1474,7 +1468,6 @@ evaluators:
     timeout: 0
     seed: null
     instance_filter: null
-    custom_dataset: null
   device_eval_batch_size: null
   subset_num_batches: null
 - label: mmlu_other_mc_5shot
@@ -1495,7 +1488,6 @@ evaluators:
     timeout: 0
     seed: null
     instance_filter: null
-    custom_dataset: null
   device_eval_batch_size: null
   subset_num_batches: null
 - label: mmlu_stem_mc_5shot_test
@@ -1516,7 +1508,6 @@ evaluators:
     timeout: 0
     seed: null
     instance_filter: null
-    custom_dataset: null
   device_eval_batch_size: null
   subset_num_batches: null
 - label: mmlu_humanities_mc_5shot_test
@@ -1537,7 +1528,6 @@ evaluators:
     timeout: 0
     seed: null
     instance_filter: null
-    custom_dataset: null
   device_eval_batch_size: null
   subset_num_batches: null
 - label: mmlu_social_sciences_mc_5shot_test
@@ -1558,7 +1548,6 @@ evaluators:
     timeout: 0
     seed: null
     instance_filter: null
-    custom_dataset: null
   device_eval_batch_size: null
   subset_num_batches: null
 - label: mmlu_other_mc_5shot_test
@@ -1579,7 +1568,6 @@ evaluators:
     timeout: 0
     seed: null
     instance_filter: null
-    custom_dataset: null
   device_eval_batch_size: null
   subset_num_batches: null
 - label: basic_arithmetic
@@ -1600,7 +1588,6 @@ evaluators:
     timeout: 0
     seed: null
     instance_filter: null
-    custom_dataset: null
   device_eval_batch_size: null
   subset_num_batches: null
 - label: trivia_qa_wiki_ppl
@@ -1621,7 +1608,6 @@ evaluators:
     timeout: 0
     seed: null
     instance_filter: null
-    custom_dataset: null
   device_eval_batch_size: null
   subset_num_batches: null
 - label: natural_qs_open_ppl
@@ -1642,7 +1628,6 @@ evaluators:
     timeout: 0
     seed: null
     instance_filter: null
-    custom_dataset: null
   device_eval_batch_size: null
   subset_num_batches: null
 - label: arc_easy_ppl
@@ -1663,7 +1648,6 @@ evaluators:
     timeout: 0
     seed: null
     instance_filter: null
-    custom_dataset: null
   device_eval_batch_size: null
   subset_num_batches: null
 eval_interval: 5000
@@ -1678,7 +1662,7 @@ save_interval_unsharded: 5000
 save_interval_ephemeral: null
 save_num_checkpoints_to_keep: -1
 save_num_unsharded_checkpoints_to_keep: -1
-save_overwrite: false
+save_overwrite: true
 force_save_unsharded: false
 no_pre_train_checkpoint: false
 load_path: null
@@ -1690,12 +1674,12 @@ sharded_checkpointer: torch_legacy
 new_style_checkpoints: null
 max_duration: 1ep
 global_train_batch_size: 1024
-device_train_batch_size: 128
+device_train_batch_size: 1024
 device_train_microbatch_size: 16
 device_eval_batch_size: 16
 eval_subset_num_batches: -1
 eval_on_load: false
-device_train_grad_accum: 8
+device_train_grad_accum: 64
 max_grad_norm: 1.0
 max_grad_norm_ratio: null
 precision: amp_bf16
@@ -1725,8 +1709,6 @@ fsdp:
 ddp:
   grad_sync_mode: batch
   find_unused_params: false
-single:
-  device: auto
 softmax_auxiliary_loss: false
 auxiliary_loss_multiplier: 0.0001
 time_limit: null
