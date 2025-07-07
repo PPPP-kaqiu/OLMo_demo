@@ -23,7 +23,7 @@ from olmo.config import (
     DistributedStrategy,
     TrainConfig,
 )
-from olmo.data import build_train_dataloader
+from olmo.data import build_train_dataloader, build_stream_train_dataloader
 from olmo.eval import build_evaluators
 from olmo.exceptions import OLMoCliError, OLMoConfigurationError
 from olmo.model import OLMo
@@ -119,9 +119,11 @@ def main(cfg: TrainConfig) -> None:
     seed_all(cfg.seed)
 
     # Construct data loader.
-    import ipdb;ipdb.set_trace()
-    train_loader = build_train_dataloader(cfg)
-
+    
+    if cfg.data.dataset_name == 'stream':
+        train_loader = build_stream_train_dataloader(cfg)
+    else:
+        train_loader = build_train_dataloader(cfg)
     # Construct evaluators.
     evaluators = build_evaluators(cfg, device)
     barrier()
