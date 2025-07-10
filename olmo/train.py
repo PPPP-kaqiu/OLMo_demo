@@ -266,10 +266,10 @@ class Trainer:
 
             self.moe_args = config_to_moe_args(self.cfg.model)
 
-    @property
-    def dataset(self) -> IterableDataset:
-        assert isinstance(self.train_loader.dataset, IterableDataset)
-        return self.train_loader.dataset
+    # @property
+    # def dataset(self) -> IterableDataset:
+    #     assert isinstance(self.train_loader.dataset, IterableDataset)
+    #     return self.train_loader.dataset
 
     @property
     def tokens_per_batch(self) -> int:
@@ -281,7 +281,7 @@ class Trainer:
 
     @property
     def max_epochs(self) -> int:
-        return math.ceil(self.max_steps / self.batches_per_epoch)
+        return 1
 
     @property
     def max_steps(self) -> int:
@@ -409,9 +409,6 @@ class Trainer:
 
         assert self.epoch is not None
         # Reshuffle dataset if needed.
-        if self.dataset.epoch != self.epoch:
-            log.info(f"Reshuffling data loader for epoch {self.epoch}...")
-            self.dataset.reshuffle(self.epoch)
 
         if self.cfg.fast_forward_batches:
             log.info(f"Fast-forwarding data loader by {self.cfg.fast_forward_batches:,d} steps")
@@ -422,11 +419,6 @@ class Trainer:
             )
             # NOTE: on the other hand we don't add anything to 'self.global_train_tokens_seen' here because
             # that variable is meant to track the actual number of tokens trained on.
-
-        if self.global_train_examples_seen_this_epoch > 0:
-            assert isinstance(self.dataset, IterableDataset)
-            log.info(f"Data loader will start at instance index {self.global_train_examples_seen_this_epoch:,d}")
-            self.dataset.start_index = self.global_train_examples_seen_this_epoch
 
         # Reset learning rate and weight decay to the values from the config, not the checkpoint.
         log.info("Resetting learning rate...")
@@ -1421,11 +1413,6 @@ class Trainer:
                 else:
                     log.info("Training epoch complete")
                     self.epoch = epoch + 1
-                    self.global_train_examples_seen_this_epoch = 0
-                    self.dataset.start_index = 0
-                    if self.epoch < self.max_epochs:
-                        log.info(f"Reshuffling data loader for epoch {self.epoch}...")
-                        self.dataset.reshuffle(self.epoch)
                     continue
 
                 break

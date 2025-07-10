@@ -10,6 +10,7 @@ from ..tokenizer import Tokenizer
 from ..torch_util import get_global_rank, get_world_size
 from .downstream import ICLMetric, label_to_task_map
 from .evaluator import Evaluator
+from transformers import AutoTokenizer
 
 __all__ = [
     "Evaluator",
@@ -71,18 +72,20 @@ def build_downstream_evaluator(
 def build_evaluator(
     train_config: TrainConfig, eval_config: EvaluatorConfig, tokenizer: Tokenizer, device: torch.device
 ) -> Evaluator:
-    from ..data import build_eval_dataloader
-
+    from ..data import build_eval_dataloader, build_stream_eval_dataloader
     if eval_config.type == EvaluatorType.downstream:
         # Downstream evaluation.
         return build_downstream_evaluator(train_config, eval_config, tokenizer, device)
     elif eval_config.type == EvaluatorType.lm:
         # Language modeling evaluation.
-        eval_loader = build_eval_dataloader(
-            train_config,
-            eval_config.data,
-            eval_config.device_eval_batch_size or train_config.device_eval_batch_size,
-        )
+        if train_config.data.dataset_name == 'stream':
+            eval_loader  = build_stream_eval_dataloader(train_config, eval_config)
+        else:
+            eval_loader = build_eval_dataloader(
+                train_config,
+                eval_config.data,
+                eval_config.device_eval_batch_size or train_config.device_eval_batch_size,
+            )
 
         def make_metric():
             return MeanMetric(nan_strategy="error").to(device)
@@ -108,7 +111,10 @@ def build_evaluator(
 
 def build_evaluators(cfg: TrainConfig, device: torch.device) -> List[Evaluator]:
     evaluators = []
-    tokenizer = Tokenizer.from_train_config(cfg)
+    if cfg.tokenizer.hf_custom is not None:
+        tokenizer = AutoTokenizer.from_pretrained(cfg.tokenizer.hf_custom)
+    else:
+        tokenizer = Tokenizer.from_train_config(cfg)
     for eval_cfg in cfg.evaluators:
         evaluators.append(build_evaluator(cfg, eval_cfg, tokenizer, device))
     return evaluators

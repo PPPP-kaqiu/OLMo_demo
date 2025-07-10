@@ -662,6 +662,7 @@ class InstanceFilterConfig(BaseConfig):
 @dataclass
 class DataConfig(BaseConfig):
     paths: Optional[List[str]] = None
+    proportions: Optional[List[float]] = None
     memmap_dtype: str = "uint16"
     datasets: Optional[Dict[str, List[str]]] = None
     label_mask_paths: Optional[List[str]] = None
@@ -676,6 +677,7 @@ class DataConfig(BaseConfig):
     timeout: int = 0
     seed: Optional[int] = None
     instance_filter: Optional[InstanceFilterConfig] = None
+    dataset_name: str = "stream"
 
     @property
     def effective_memmap_dtype(self):
@@ -711,6 +713,7 @@ class TruncationDirection(StrEnum):
 class TokenizerConfig(BaseConfig):
     identifier: str = "gpt2"
     truncate_direction: TruncationDirection = TruncationDirection.right
+    hf_custom: str = ""
 
 
 @dataclass
@@ -1105,7 +1108,7 @@ class TrainConfig(BaseConfig):
     When this is set we don't restore the trainer state from a checkpoint.
     """
 
-    sharded_checkpointer: ShardedCheckpointerType = ShardedCheckpointerType.torch_legacy
+    sharded_checkpointer: ShardedCheckpointerType = ShardedCheckpointerType.torch_new
     """
     The name of the sharded checkpointer to use to save (sharded) checkpoints throughout training.
     """

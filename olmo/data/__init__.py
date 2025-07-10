@@ -10,8 +10,10 @@ from ..torch_util import barrier, get_global_rank, get_world_size
 from .collator import DataCollator
 from .iterable_dataset import IterableDataset
 from .memmap_dataset import MemMapDataset
-
-__all__ = ["MemMapDataset", "DataCollator", "IterableDataset", "build_eval_dataloader", "build_train_dataloader"]
+from streaming import StreamingDataset, Stream
+import torch 
+import numpy as np
+__all__ = ["MemMapDataset", "DataCollator", "IterableDataset", "build_eval_dataloader", "build_train_dataloader", "build_stream_train_dataloader", "build_stream_eval_dataloader"]
 
 
 def build_memmap_dataset(
@@ -124,6 +126,94 @@ def build_train_dataloader(
         batch_size=train_config.device_train_batch_size,
         drop_last=train_config.data.drop_last,
         collate_fn=collator,
+        num_workers=train_config.data.num_workers,
+        pin_memory=train_config.data.pin_memory,
+        prefetch_factor=None if train_config.data.num_workers == 0 else train_config.data.prefetch_factor,
+        persistent_workers=False if train_config.data.num_workers == 0 else train_config.data.persistent_workers,
+        timeout=train_config.data.timeout,
+    )
+
+def collate_and_convert(batch):
+    all_tokens = []
+    for sample in batch:
+        token_bytes = sample['tokens']
+        numpy_array = np.frombuffer(token_bytes, dtype=np.uint16).copy()
+        token_tensor = torch.from_numpy(numpy_array).long()  # <--- 在这里添加 .long()
+        all_tokens.append(token_tensor)
+    # 将 list of tensors 堆叠成一个 batch tensor
+    return {"input_ids": torch.stack(all_tokens)}
+
+def build_stream_train_dataloader(
+    train_config: TrainConfig,
+    *,
+    world_size: Optional[int] = None,
+    rank: Optional[int] = None,
+    fs_local_rank: Optional[int] = None,
+    include_instance_metadata: bool = False,
+) -> DataLoader:
+    assert train_config.device_train_batch_size is not None
+    streams = [Stream(local=data_path, proportion=prop) for data_path, prop in zip(train_config.data.paths, train_config.data.proportions)]
+    dataset = StreamingDataset(
+                streams=streams,
+                batch_size=train_config.device_train_batch_size,
+                shuffle=True,          # 开启 shuffle
+                shuffle_algo='py1s',   # 推荐的 shuffle 算法
+                shuffle_seed=0,     # 使用我们为每个 rank 设置的种子
+                predownload=10_000,     # 预下载的样本数
+                cache_limit='100gb'    # 缓存大小限制
+                )
+    work_dir = Path(train_config.save_folder) / "train_data"
+    if get_global_rank() == 0:
+        if work_dir.is_dir() and not train_config.save_overwrite:
+            raise OLMoConfigurationError(
+                "train data working directory already exists, use --save_overwrite to overwrite"
+            )
+        else:
+            work_dir.mkdir(exist_ok=True, parents=True)
+    barrier()
+    seed = train_config.data.seed if train_config.data.seed is not None else train_config.seed
+    return DataLoader(
+        dataset,
+        batch_size=train_config.device_train_batch_size,
+        drop_last=train_config.data.drop_last,
+        collate_fn=collate_and_convert,
+        num_workers=train_config.data.num_workers,
+        pin_memory=train_config.data.pin_memory,
+        prefetch_factor=None if train_config.data.num_workers == 0 else train_config.data.prefetch_factor,
+        persistent_workers=False if train_config.data.num_workers == 0 else train_config.data.persistent_workers,
+        timeout=train_config.data.timeout,
+    )
+    
+def build_stream_eval_dataloader(
+    train_config: TrainConfig,
+    eval_config
+) -> DataLoader:
+    assert train_config.device_train_batch_size is not None
+    streams = [Stream(local=data_path[0], proportion=1.0) for name, data_path in eval_config.data.datasets.items()]
+    dataset = StreamingDataset(
+                streams=streams,
+                batch_size=train_config.device_train_batch_size,
+                shuffle=True,          # 开启 shuffle
+                shuffle_algo='py1s',   # 推荐的 shuffle 算法
+                shuffle_seed=0,     # 使用我们为每个 rank 设置的种子
+                predownload=10_000,     # 预下载的样本数
+                cache_limit='100gb'    # 缓存大小限制
+                )
+    work_dir = Path(train_config.save_folder) / "train_data"
+    if get_global_rank() == 0:
+        if work_dir.is_dir() and not train_config.save_overwrite:
+            raise OLMoConfigurationError(
+                "train data working directory already exists, use --save_overwrite to overwrite"
+            )
+        else:
+            work_dir.mkdir(exist_ok=True, parents=True)
+    barrier()
+    seed = train_config.data.seed if train_config.data.seed is not None else train_config.seed
+    return DataLoader(
+        dataset,
+        batch_size=train_config.device_train_batch_size,
+        drop_last=train_config.data.drop_last,
+        collate_fn=collate_and_convert,
         num_workers=train_config.data.num_workers,
         pin_memory=train_config.data.pin_memory,
         prefetch_factor=None if train_config.data.num_workers == 0 else train_config.data.prefetch_factor,
