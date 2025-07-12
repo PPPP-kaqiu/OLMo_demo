@@ -413,7 +413,7 @@ class OLMoBlock(nn.Module):
         self.layer_id = layer_id
         self.config = config
         self.hidden_size = (
-            config.mlp_hidden_size if config.mlp_hidden_size is not None else config.mlp_ratio * config.d_model
+            config.mlp_hidden_size if config.mlp_hidden_size is not None else int(config.mlp_ratio * config.d_model)
         )
         self.__cache = cache
         assert config.d_model % config.n_heads == 0

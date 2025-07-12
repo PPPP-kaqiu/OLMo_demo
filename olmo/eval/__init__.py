@@ -113,6 +113,7 @@ def build_evaluators(cfg: TrainConfig, device: torch.device) -> List[Evaluator]:
     evaluators = []
     if cfg.tokenizer.hf_custom is not None:
         tokenizer = AutoTokenizer.from_pretrained(cfg.tokenizer.hf_custom)
+        tokenizer.pad_token_id = tokenizer.eos_token_id
     else:
         tokenizer = Tokenizer.from_train_config(cfg)
     for eval_cfg in cfg.evaluators:

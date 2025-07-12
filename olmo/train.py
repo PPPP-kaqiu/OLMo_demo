@@ -853,12 +853,13 @@ class Trainer:
                         lb_loss = lb_loss / len(micro_batches)
                         moe_z_loss = moe_z_loss / len(micro_batches)
                     elif self.model.config.moe_loss_weight:
-                        lb_loss = batched_load_balancing_loss(self.moe_args) / len(micro_batches)
+                        lb_loss, _ = batched_load_balancing_loss(self.moe_args)
+                        lb_loss = lb_loss / len(micro_batches)
                     if self.model.config.moe_log_expert_assignment:
                         if self.model.config.moe_zloss_weight:
                             tokens_per_expert, _, _ = zip(*get_load_balancing_loss())
                         else:
-                            tokens_per_expert, _ = zip(*get_load_balancing_loss())
+                            tokens_per_expert, _, _ = zip(*get_load_balancing_loss())
                         expert_assignments += torch.stack(tokens_per_expert, dim=0)
                     clear_load_balancing_loss()
                     if self.model.config.moe_loss_weight:

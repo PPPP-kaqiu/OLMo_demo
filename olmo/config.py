@@ -272,7 +272,7 @@ class ModelConfig(BaseConfig):
     The number of layers/blocks.
     """
 
-    mlp_ratio: int = 4
+    mlp_ratio: float = 4.0
     """
     The ratio of the inner MLP dimensionality to ``d_model``.
     This is only used when ``mlp_hidden_size`` is not set.

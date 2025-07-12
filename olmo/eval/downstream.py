@@ -330,8 +330,10 @@ class ICLMultiChoiceTaskDataset(metaclass=abc.ABCMeta):
         for sample in data:
             doc_ids.append(sample["doc_id"])
             cont_ids.append(sample["cont_id"])
-
-            ctxs.append(torch.LongTensor(self.pad_tokens_until_max(sample["ctx"], max_len=max_ctx_len)))
+            try:
+                ctxs.append(torch.LongTensor(self.pad_tokens_until_max(sample["ctx"], max_len=max_ctx_len)))
+            except:
+                import ipdb;ipdb.set_trace()
             continuations.append(
                 torch.LongTensor(self.pad_tokens_until_max(sample["continuation"], max_len=max_cont_len))
             )
