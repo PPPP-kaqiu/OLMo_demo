@@ -78,6 +78,7 @@ try:
     )
 except ImportError:
     pass
+import torch.autograd as autograd
 
 __all__ = ["SpeedMonitor", "LRMonitor", "Trainer"]
 
@@ -818,7 +819,12 @@ class Trainer:
             else torch.zeros((self.model.config.n_layers, self.model.config.moe_num_experts), device=self.device)
         )
         num_micro_batches = len(micro_batches)
-
+        if self.model.config.moe_loss_stop_grad:
+            router_params = [
+                p
+                for n, p in self.model.named_parameters()
+                if "router" in n and p.requires_grad
+            ]
         for micro_batch_idx, micro_batch in enumerate(micro_batches):
             # setup sync context for DDP for all micro-batches except the last
             grad_sync_context = nullcontext
@@ -863,14 +869,19 @@ class Trainer:
                         expert_assignments += torch.stack(tokens_per_expert, dim=0)
                     clear_load_balancing_loss()
                     if self.model.config.moe_loss_weight:
-                        loss += lb_loss
+                        if not self.model.config.moe_loss_stop_grad:
+                            loss += lb_loss
                         lb_batch_loss += lb_loss.detach()
                     if self.model.config.moe_zloss_weight:
                         loss += moe_z_loss
                         moe_z_batch_loss += moe_z_loss.detach()
 
                 # Run backward pass.
-                loss.backward()
+                if self.model.config.moe_loss_stop_grad:
+                    loss.backward(retain_graph=True)
+                    autograd.backward(lb_loss, inputs=router_params)
+                else:
+                    loss.backward()
 
             # Remove output hooks
             for hook in output_hooks:

@@ -498,6 +498,11 @@ class ModelConfig(BaseConfig):
     The weight to use for the MoE load balancing loss.
     """
 
+    moe_loss_stop_grad: Optional[bool] = False
+    """
+    MOE stop grad, isolate auxiliary loss from the main loss, only optimize the router network.
+    """
+    
     moe_zloss_weight: Optional[float] = None
     """
     Weight for MoE router z-loss where None means no router z-loss. 0.001 is a common value.
