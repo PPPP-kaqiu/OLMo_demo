@@ -56,6 +56,8 @@ elif sys.version_info.minor == 8:
 else:
     raise SystemExit("This script supports Python 3.8 or higher")
 
+from copy import deepcopy
+
 __all__ = [
     "LayerNormBase",
     "LayerNorm",
@@ -481,7 +483,6 @@ class OLMoBlock(nn.Module):
             self.k_norm.reset_parameters()
         if self.q_norm is not None:
             self.q_norm.reset_parameters()
-
         if self.config.init_fn == InitFnType.normal:
             attn_out_std = ff_out_std = self.config.init_std
             cutoff_factor = self.config.init_cutoff_factor
@@ -666,6 +667,11 @@ class OLMoBlock(nn.Module):
         elif config.block_type == BlockType.llama:
             return OLMoLlamaBlock(layer_id, config, cache)
         elif config.block_type == BlockType.moe:
+            if layer_id < config.first_k_dense:
+                new_config = deepcopy(config)
+                new_config.mlp_ratio = 8
+                new_config.block_type = BlockType.sequential
+                return OLMoSequentialBlock(layer_id, new_config, cache)
             return OLMoEBlock(layer_id, config, cache)
         else:
             raise NotImplementedError(f"Unknown block type: '{config.block_type}'")

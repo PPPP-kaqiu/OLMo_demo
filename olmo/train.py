@@ -79,6 +79,7 @@ try:
 except ImportError:
     pass
 import torch.autograd as autograd
+from copy import deepcopy
 
 __all__ = ["SpeedMonitor", "LRMonitor", "Trainer"]
 
@@ -264,8 +265,9 @@ class Trainer:
 
         if self.model.config.block_type == BlockType.moe:
             from .config import config_to_moe_args
-
-            self.moe_args = config_to_moe_args(self.cfg.model)
+            moe_args = deepcopy(self.cfg.model)
+            moe_args.n_layers = moe_args.n_layers - moe_args.first_k_dense
+            self.moe_args = config_to_moe_args(moe_args)
 
     # @property
     # def dataset(self) -> IterableDataset:
@@ -816,7 +818,7 @@ class Trainer:
                 (self.model.config.block_type != BlockType.moe)
                 or (self.model.config.moe_log_expert_assignment is False)
             )
-            else torch.zeros((self.model.config.n_layers, self.model.config.moe_num_experts), device=self.device)
+            else torch.zeros((self.model.config.n_layers - self.model.config.first_k_dense, self.model.config.moe_num_experts), device=self.device)
         )
         num_micro_batches = len(micro_batches)
         if self.model.config.moe_loss_stop_grad:
@@ -852,7 +854,6 @@ class Trainer:
                     if z_loss is not None:
                         assert z_batch_loss is not None
                         z_batch_loss += z_loss.detach()
-
                 if self.model.config.block_type == BlockType.moe:
                     if self.model.config.moe_zloss_weight:
                         lb_loss, moe_z_loss = batched_load_balancing_loss(self.moe_args)

@@ -498,6 +498,11 @@ class ModelConfig(BaseConfig):
     The weight to use for the MoE load balancing loss.
     """
 
+    first_k_dense: Optional[int] = 0
+    """
+    The number of experts to select for each token.
+    """
+    
     moe_loss_stop_grad: Optional[bool] = False
     """
     MOE stop grad, isolate auxiliary loss from the main loss, only optimize the router network.
